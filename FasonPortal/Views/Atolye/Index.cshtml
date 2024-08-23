@@ -1,0 +1,297 @@
+﻿@model IEnumerable<FasonPortal.Models.FabrikaBazliSiparisViewModel>
+
+@{
+    ViewData["Title"] = "Atölye Siparişleri";
+    Layout = "_Layout";
+}
+
+<div class="indexbody mt-10">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="card bg-dark text-light shadow-lg rounded-3">
+                <div class="card-header text-center bg-dark text-white rounded-top-3">
+                    <h2>Atölye Siparişleri</h2>
+                </div>
+                <div class="card-body bg-dark text-white rounded-bottom-3">
+                    <div class="accordion" id="fabrikaAccordion">
+                        @foreach (var fabrikaGroup in Model)
+                        {
+                            <div class="card bg-dark mb-3">
+                                <div class="card-header p-2" id="heading_@fabrikaGroup.FabrikaAd.Replace(" ", "_")">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h5">@fabrikaGroup.FabrikaAd</span>
+                                        <button class="btn btn-primary btn-sm ml-auto" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_@fabrikaGroup.FabrikaAd.Replace(" ", "_")" aria-expanded="false" aria-controls="collapse_@fabrikaGroup.FabrikaAd.Replace(" ", "_")">
+                                            Detay Gör
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="collapse_@fabrikaGroup.FabrikaAd.Replace(" ", "_")" class="collapse" aria-labelledby="heading_@fabrikaGroup.FabrikaAd.Replace(" ", "_")" data-bs-parent="#fabrikaAccordion">
+                                    <div class="card-body">
+                                        <table class="table table-dark table-striped table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>İş Tipi</th>
+                                                    <th>Adet</th>
+                                                    <th>Birim Fiyat</th>
+                                                    <th>Durum</th>
+                                                    <th>Toplam Tutar</th>
+                                                    <th>İşlemler</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var siparis in fabrikaGroup.Siparisler)
+                                                {
+                                                    <tr>
+                                                        <td>@siparis.IsTipiAd</td>
+                                                        <td>@siparis.Adet</td>
+                                                        <td>@siparis.BirimFiyat.ToString("C2")</td>
+                                                        <td id="status_@siparis.Id">@siparis.Durum</td>
+                                                        <td>@((siparis.Adet * siparis.BirimFiyat).ToString("C2"))</td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <button type="button" class="btn btn-sm @GetButtonClass(siparis.Durum, "Onaylandı")" data-id="@siparis.Id" data-status="Onaylandı" @GetButtonDisabled(siparis.Durum, "Onaylandı")>Onayla</button>
+                                                                <button type="button" class="btn btn-sm @GetButtonClass(siparis.Durum, "Hazırlanıyor")" data-id="@siparis.Id" data-status="Hazırlanıyor" @GetButtonDisabled(siparis.Durum, "Hazırlanıyor")>Hazırlanıyor</button>
+                                                                <button type="button" class="btn btn-sm @GetButtonClass(siparis.Durum, "Tamamlandı")" data-id="@siparis.Id" data-status="Tamamlandı" @GetButtonDisabled(siparis.Durum, "Tamamlandı")>Tamamlandı</button>
+                                                                <button type="button" class="btn btn-sm @GetButtonClass(siparis.Durum, "İptal Edildi")" data-id="@siparis.Id" data-status="@(siparis.Durum == "İptal Edildi" ? "Geri Al" : "İptal Edildi")" @GetButtonDisabled(siparis.Durum, "İptal Edildi")>@(siparis.Durum == "İptal Edildi" ? "Geri Al" : "İptal Et")</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="@Url.Action("RaporAl", "Atolye")" class="btn btn-success w-100">Tüm Fabrikalara Göre Rapor Al</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Sayfa yüklendiğinde, daha önce iptal edilmiş siparişlerin butonlarını ayarla
+            $('.btn-group').each(function () {
+                var status = $(this).closest('tr').find('td[id^="status_"]').text().trim();
+                var buttons = $(this).find('button');
+
+                if (status === "İptal Edildi") {
+                    buttons.each(function () {
+                        var btn = $(this);
+                        if (btn.data('status') === 'Geri Al') {
+                            btn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-dark');
+                        } else {
+                            btn.prop('disabled', true).removeClass('btn-warning btn-info btn-success btn-danger').addClass('btn-secondary');
+                        }
+                    });
+                }
+            });
+
+            // Buton grubu için tıklama olaylarını yönetir
+            $('.btn-group').on('click', 'button', function () {
+                var button = $(this);
+                var status = button.data('status');
+                var id = button.data('id');
+                var previousStatus = $('#status_' + id).text().trim();
+
+                var confirmation = confirm("Durumu '" + status + "' olarak değiştirmek istediğinize emin misiniz?");
+                if (confirmation) {
+                    $.post('@Url.Action("ChangeStatus", "Atolye")', {
+                        id: id,
+                        newStatus: status
+                    })
+                        .done(function (response) {
+                            if (response.success) {
+                                $('#status_' + id).text(response.newStatus);
+
+                                // Butonları durum değişikliğine göre ayarla
+                                if (response.newStatus === 'İptal Edildi') {
+                                    button.closest('.btn-group').find('button').each(function () {
+                                        $(this).prop('disabled', true).removeClass('btn-warning btn-info btn-success btn-danger').addClass('btn-secondary');
+                                    });
+                                    button.text('Geri Al').data('status', 'Geri Al').prop('disabled', false).removeClass('btn-secondary').addClass('btn-dark');
+                                } else if (response.newStatus === 'Beklemede') {
+                                    button.closest('.btn-group').find('button').each(function () {
+                                        $(this).removeClass('btn-secondary').prop('disabled', false);
+                                        switch ($(this).data('status')) {
+                                            case 'Onaylandı':
+                                                $(this).addClass('btn-warning');
+                                                break;
+                                            case 'Hazırlanıyor':
+                                                $(this).addClass('btn-info');
+                                                break;
+                                            case 'Tamamlandı':
+                                                $(this).addClass('btn-success');
+                                                break;
+                                            case 'İptal Edildi':
+                                                $(this).addClass('btn-danger').text('İptal Et').data('status', 'İptal Edildi');
+                                                break;
+                                        }
+                                    });
+                                }
+
+                                // Geri Al butonuna basıldığında, butonu hemen İptal Et butonuna dönüştür
+                                if (status === 'Geri Al') {
+                                    button.text('İptal Et').data('status', 'İptal Edildi').removeClass('btn-dark').addClass('btn-danger');
+                                }
+
+                                // Onaylandı butonuna basıldığında, butonu pasif hale getir
+                                if (status === 'Onaylandı') {
+                                    button.prop('disabled', true).removeClass('btn-warning').addClass('btn-secondary');
+                                }
+                            } else {
+                                alert("Durum değişikliği başarısız oldu: " + response.message);
+                            }
+                        })
+                        .fail(function (jqXHR, textStatus, errorThrown) {
+                            alert("Durum değişikliği sırasında bir hata oluştu: " + textStatus + " - " + errorThrown);
+                        });
+                }
+            });
+        });
+    </script>
+}
+
+
+
+@functions {
+    public string GetButtonClass(string currentStatus, string buttonStatus)
+    {
+        if (currentStatus == "İptal Edildi" && buttonStatus != "Geri Al")
+        {
+            return "btn-secondary";  // 'İptal Edildi' durumunda diğer butonlar pasifleşir
+        }
+        else if (currentStatus == buttonStatus)
+        {
+            return "btn-secondary";  // Grileşmiş (pasif) buton rengi
+        }
+
+        return buttonStatus switch
+        {
+            "Onaylandı" => "btn-warning",
+            "Hazırlanıyor" => "btn-info",
+            "Tamamlandı" => "btn-success",
+            "İptal Edildi" => "btn-danger",
+            _ => "btn-primary"
+        };
+    }
+
+    public string GetButtonDisabled(string currentStatus, string buttonStatus)
+    {
+        if (currentStatus == "İptal Edildi" && buttonStatus != "Geri Al")
+        {
+            return "disabled";  // 'İptal Edildi' durumunda diğer butonlar pasif olur
+        }
+
+        return currentStatus == buttonStatus ? "disabled" : "";
+    }
+}
+
+<style>
+    .indexbody {
+        margin-top: 150px;
+    }
+
+    body {
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
+
+    .card {
+        background-color: #2c2c2c;
+        border: none;
+        box-shadow: 0 6px 20px rgba(139, 0, 0, 0.9);
+        border-radius: 15px;
+    }
+
+    .card-header {
+        background-color: #121212;
+        border-bottom: 1px solid #8B0000;
+        border-radius: 15px 15px 0 0;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .card-body {
+        background-color: #2c2c2c;
+    }
+
+    .collapse .card-body {
+        background-color: #121212;
+        border-radius: 0 0 15px 15px;
+    }
+
+    .btn-primary {
+        background-color: #8B0000;
+        border-color: #8B0000;
+    }
+
+        .btn-primary:hover {
+            background-color: #600000;
+            border-color: #600000;
+        }
+
+    .btn-warning {
+        background-color: #FFD700;
+        border-color: #FFD700;
+    }
+
+        .btn-warning:hover {
+            background-color: #FFC107;
+            border-color: #FFC107;
+        }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+
+    .btn-group {
+        display: flex;
+        gap: 5px;
+    }
+
+    .table {
+        margin-top: 20px;
+        border: 1px solid #444;
+        color: #fff;
+    }
+
+        .table th,
+        .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+
+</style>

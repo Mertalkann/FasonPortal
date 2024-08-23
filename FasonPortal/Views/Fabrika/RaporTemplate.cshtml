@@ -1,0 +1,73 @@
+﻿@model IEnumerable<FasonPortal.Models.IsEmriViewModel>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Raporu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Sipariş Raporu</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sipariş ID</th>
+                <th>İş Tipi</th>
+                <th>Atölye</th>
+                <th>Adet</th>
+                <th>Birim Fiyat</th>
+                <th>Toplam Maliyet</th>
+                <th>Açıklama</th>
+                <th>Durum</th>
+                <th>Oluşturulma Tarihi</th>
+                <th>Fabrika</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.IsTipiAd</td>
+                    <td>@item.AtolyeAd</td>
+                    <td>@item.Adet</td>
+                    <td>@item.BirimFiyat.ToString("C2")</td>
+                    <td>@((item.Adet * item.BirimFiyat).ToString("C2"))</td>
+                    <td>@item.Aciklama</td>
+                    <td>@item.Durum</td>
+                    <td>@item.OlusturulmaTarihi.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.FabrikaAd</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</body>
+</html>

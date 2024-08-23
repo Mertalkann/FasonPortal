@@ -1,0 +1,82 @@
+
+
+.navbar-dark {
+
+    margin-bottom: 0; /* Navbar altýndaki boþluðu sýfýrla */
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: #dcdcdc !important; /* Açýk gri yazý */
+}
+
+.navbar-dark .navbar-brand {
+    color: #fff !important; /* Beyaz yazý */
+}
+
+.flex-fill {
+    flex: 1 0 auto;
+}
+
+.footer {
+    
+    color: #dcdcdc; /* Açýk gri yazý */
+    width: 100%;
+    position: relative;
+    bottom: 0;
+}
+
+.btn-link.nav-link {
+    color: #dcdcdc !important; /* Logout butonu yazý rengi */
+}
+
+.container {
+  
+}
+
+/* Home Page Styles */
+.card-header {
+    background-color: #333; /* Daha koyu gri */
+    color: #fff; /* Beyaz metin */
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    background-color: #444; /* Koyu gri arka plan */
+}
+
+.card-body {
+    padding: 2rem;
+    background-color: #555; /* Daha koyu gri arka plan */
+}
+
+.card-text {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: #f2f2f2; /* Açýk gri metin */
+}
+
+.btn-lg {
+    padding: 0.75rem 1.25rem;
+    font-size: 1.25rem;
+}
+
+.btn-outline-light {
+    border-color: #f2f2f2; /* Açýk gri kenarlýk */
+    color: #f2f2f2; /* Açýk gri metin */
+}
+
+.btn-outline-light:hover {
+    background-color: #f2f2f2; /* Açýk gri arka plan */
+    color: #333; /* Koyu gri metin */
+}
+
+/* Logo Styles */
+.logo {
+    max-height: 40px !important; /* Logonun maksimum yüksekliði */
+    height: auto !important;
+    width: auto !important;
+}
+
+

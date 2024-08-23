@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FasonPortal</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/sit.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .back {
+            background: url('/images/background.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .logo {
+            max-height: 200px !important;
+            height: auto !important;
+            width: auto !important;
+        }
+        .nav {
+            background-color: #2c2c2c;
+            box-shadow: 0 0 20px #3b0000;
+        }
+        .navbar-nav {
+            margin-left: auto;
+        }
+        .navbar-brand, .navbar-nav {
+            display: flex;
+            align-items: center;
+        }
+        body, .navbar, .footer, .card, .nav-link, .card-text, .display-4, h5, span {
+            font-family: 'Roboto', sans-serif;
+        }
+        .welcome-text {
+            margin-left: 15px;
+            white-space: nowrap;
+        }
+        .footerr{
+            box-shadow: 0 0 20px #3b0000;
+        }
+    </style>
+</head>
+<body class="back d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top nav">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <img src="~/images/asonlogo.png" alt="FasonPortal Logo" class="logo">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <span class="nav-link h5 text-white welcome-text">Hoşgeldiniz, @User.Identity.Name</span>
+                    }
+                </a>
+
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            @if (User.IsInRole("FabrikaYetkilisi"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link h5" asp-area="" asp-controller="Fabrika" asp-action="Index">Siparişlerim</a>
+                                </li>
+                            }
+                            <li class="nav-item">
+                                <form id="logoutForm" asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="form-inline">
+                                    <button type="submit" class="btn btn-link h5 nav-link" style="text-decoration:none;">Logout</button>
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link h5" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main role="main" class="flex-fill mt-5">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="footer footerr mt-auto py-3 text-white-50 nav">
+        <div class="container text-center">
+            <span>© 2023 FasonPortal. All rights reserved.</span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,311 @@
+﻿@model IEnumerable<FasonPortal.Models.Atolye>
+
+@{
+    ViewData["Title"] = "Atölye Yönetimi";
+    Layout = "Admin_Layout";
+}
+
+<div class="indexbody mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="card text-light shadow-lg rounded-3">
+                <div class="card-header text-center text-white rounded-top-3">
+                    <h2>Atölye İşlemleri</h2>
+                </div>
+                <div class="card-body text-white rounded-bottom-3">
+                    <div class="accordion" id="atolyeAccordion">
+                        @foreach (var atolyeGroup in ViewBag.AtolyeViewModel)
+                        {
+                            <div class="card bg-dark mb-3">
+                                <div class="card-header p-2" id="heading_@atolyeGroup.Atolye.Id">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h5">@atolyeGroup.Atolye.Ad</span>
+                                        <div>
+                                            <button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#collapse_@atolyeGroup.Atolye.Id" aria-expanded="false" aria-controls="collapse_@atolyeGroup.Atolye.Id">
+                                                Detay Gör
+                                            </button>
+                                            <a href="@Url.Action("Edit", "AtolyeManagement", new { id = atolyeGroup.Atolye.Id })" class="btn btn-warning btn-sm ml-2">Düzenle</a>
+                                            <form asp-action="Delete" asp-route-id="@atolyeGroup.Atolye.Id" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger btn-sm ml-2" onclick="return confirm('Bu atölyeyi silmek istediğinize emin misiniz?');">Sil</button>
+                                            </form>
+                                            <a href="@Url.Action("RaporAl", "AtolyeManagement", new { atolyeId = atolyeGroup.Atolye.Id })" class="btn btn-success btn-sm ml-2">Rapor Al</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="collapse_@atolyeGroup.Atolye.Id" class="collapse" aria-labelledby="heading_@atolyeGroup.Atolye.Id" data-parent="#atolyeAccordion">
+                                    <div class="card-body">
+                                        <p class="text-light">@atolyeGroup.Atolye.Aciklama</p>
+                                        <p class="text-light">
+                                            <strong>İş Tipi Sayısı:</strong> @atolyeGroup.ToplamIsTipi <br />
+                                            <strong>Sipariş Sayısı:</strong> @atolyeGroup.ToplamSiparis <br />
+                                            <strong>İptal Edilen Siparişler:</strong> @atolyeGroup.ToplamIptalSiparis <br />
+                                            <strong>Kullanıcı Sayısı:</strong> @atolyeGroup.ToplamKullanici <br />
+                                            <strong>Toplam Gelir:</strong> @String.Format("{0:C}", atolyeGroup.ToplamGelir) <br />
+                                        </p>
+
+                                        <!-- Fabrika Bazlı Siparişler -->
+                                        <h5>Fabrika Bazlı Siparişler</h5>
+                                        <table class="table table-dark table-striped table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fabrika</th>
+                                                    <th>İş Tipi</th>
+                                                    <th>Sipariş Adedi</th>
+                                                    <th>Sipariş Tutarı</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @{
+                                                    var colors = new Dictionary<string, string>();
+                                                    var colorIndex = 0;
+                                                    var colorPalette = new[] { "#ffcccc", "#ccffcc", "#ccccff", "#ffcc99", "#99ccff" };
+                                                }
+
+                                                @foreach (var fabrikaGroup in atolyeGroup.FabrikaBazliGruplar)
+                                                {
+                                                    if (!colors.ContainsKey(fabrikaGroup.FabrikaAd))
+                                                    {
+                                                        colors[fabrikaGroup.FabrikaAd] = colorPalette[colorIndex % colorPalette.Length];
+                                                        colorIndex++;
+                                                    }
+
+                                                    foreach (var isTipiGroup in fabrikaGroup.IsTipiGruplar)
+                                                    {
+                                                        <tr style="background-color:@colors[fabrikaGroup.FabrikaAd]">
+                                                            <td>@fabrikaGroup.FabrikaAd</td>
+                                                            <td>@isTipiGroup.IsTipiAd</td>
+                                                            <td>@isTipiGroup.ToplamAdet adet</td>
+                                                            <td>@String.Format("{0:C}", isTipiGroup.ToplamTutar)</td>
+                                                        </tr>
+                                                    }
+                                                    <tr style="background-color:@colors[fabrikaGroup.FabrikaAd]">
+                                                        <td colspan="2"><strong>@fabrikaGroup.FabrikaAd Toplam</strong></td>
+                                                        <td><strong>@fabrikaGroup.ToplamAdet adet</strong></td>
+                                                        <td><strong>@String.Format("{0:C}", fabrikaGroup.ToplamTutar)</strong></td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+
+                                        <!-- İş Tipi Bazlı Siparişler -->
+                                        <h5>İş Tipi Bazlı Siparişler</h5>
+                                        <table class="table table-dark table-striped table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>İş Tipi</th>
+                                                    <th>Fabrika</th>
+                                                    <th>Sipariş Adedi</th>
+                                                    <th>Sipariş Tutarı</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var isTipiGroup in atolyeGroup.IsTipiBazliGruplar)
+                                                {
+                                                    if (!colors.ContainsKey(isTipiGroup.IsTipiAd))
+                                                    {
+                                                        colors[isTipiGroup.IsTipiAd] = colorPalette[colorIndex % colorPalette.Length];
+                                                        colorIndex++;
+                                                    }
+
+                                                    foreach (var fabrikaGroup in isTipiGroup.FabrikaGruplar)
+                                                    {
+                                                        <tr style="background-color:@colors[isTipiGroup.IsTipiAd]">
+                                                            <td>@isTipiGroup.IsTipiAd</td>
+                                                            <td>@fabrikaGroup.FabrikaAd</td>
+                                                            <td>@fabrikaGroup.ToplamAdet adet</td>
+                                                            <td>@String.Format("{0:C}", fabrikaGroup.ToplamTutar)</td>
+                                                        </tr>
+                                                    }
+                                                    <tr style="background-color:@colors[isTipiGroup.IsTipiAd]">
+                                                        <td colspan="2"><strong>@isTipiGroup.IsTipiAd Toplam</strong></td>
+                                                        <td><strong>@isTipiGroup.ToplamAdet adet</strong></td>
+                                                        <td><strong>@String.Format("{0:C}", isTipiGroup.ToplamTutar)</strong></td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+
+                                        <!-- İptal Edilen Siparişler -->
+                                        <h5>İptal Edilen Siparişler</h5>
+                                        <table class="table table-dark table-striped table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fabrika</th>
+                                                    <th>İş Tipi</th>
+                                                    <th>Adet</th>
+                                                    <th>Sipariş Tutarı</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @{
+                                                    var toplamIptalAdet = 0;
+                                                    var toplamIptalTutar = 0m;
+                                                }
+
+                                                @foreach (var iptalEdilen in atolyeGroup.IptalEdilenIsEmirleri)
+                                                {
+                                                    toplamIptalAdet += iptalEdilen.Adet;
+                                                    toplamIptalTutar += iptalEdilen.BirimFiyat * iptalEdilen.Adet;
+
+                                                    <tr>
+                                                        <td>@iptalEdilen.Fabrika.Ad</td>
+                                                        <td>@iptalEdilen.IsTipi.Ad</td>
+                                                        <td>@iptalEdilen.Adet adet</td>
+                                                        <td>@String.Format("{0:C}", iptalEdilen.BirimFiyat * iptalEdilen.Adet)</td>
+                                                    </tr>
+                                                }
+                                                <tr>
+                                                    <td colspan="2"><strong>Toplam İptal Edilen</strong></td>
+                                                    <td><strong>@toplamIptalAdet adet</strong></td>
+                                                    <td><strong>@String.Format("{0:C}", toplamIptalTutar)</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <!-- Atölye Kullanıcı Bilgileri -->
+                                        <h5>Atölye Kullanıcı Bilgileri</h5>
+                                        <table class="table table-dark table-striped table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Kullanıcı Adı</th>
+                                                    <th>Email</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var user in atolyeGroup.Atolye.Users)
+                                                {
+                                                    <tr>
+                                                        <td>@user.UserName</td>
+                                                        <td>@user.Email</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="@Url.Action("Create", "AtolyeManagement", new { Area = "Admin" })" class="btn btn-primary w-100">Yeni Atölye Ekle</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Detay Gör butonuna basıldığında ilgili menünün açılıp kapanması sağlanıyor.
+            $('.btn-primary[data-toggle="collapse"]').click(function () {
+                var target = $(this).data('target');
+                $(target).collapse('toggle');
+            });
+        });
+    </script>
+}
+
+
+<style>
+    .indexbody {
+        margin-top: 150px;
+    }
+
+    body {
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
+
+    .card {
+        background-color: #2c2c2c;
+        border: none;
+        box-shadow: 0 6px 20px rgba(139, 0, 0, 0.9);
+        border-radius: 15px;
+    }
+
+    .card-header {
+        background-color: #121212;
+        border-bottom: 1px solid #8B0000;
+        border-radius: 15px 15px 0 0;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .card-body {
+        background-color: #2c2c2c;
+    }
+
+    .collapse .card-body {
+        background-color: #121212; /* Aynı renk olarak ayarlandı */
+        border-radius: 0 0 15px 15px;
+    }
+
+    .btn-primary {
+        background-color: #8B0000;
+        border-color: #8B0000;
+    }
+
+    .btn-primary:hover {
+        background-color: #600000;
+        border-color: #600000;
+    }
+
+    .btn-warning {
+        background-color: #FFD700;
+        border-color: #FFD700;
+    }
+
+    .btn-warning:hover {
+        background-color: #FFC107;
+        border-color: #FFC107;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+
+    .table {
+        margin-top: 20px;
+        border: 1px solid #444;
+        color: #fff;
+    }
+
+    .table th,
+    .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .btn-link {
+        color: #ffffff;
+    }
+
+    .btn-link:hover {
+        text-decoration: none;
+    }
+
+    .ml-2 {
+        margin-left: 0.5rem;
+    }
+</style>

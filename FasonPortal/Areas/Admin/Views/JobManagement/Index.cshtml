@@ -1,0 +1,162 @@
+﻿@model IEnumerable<FasonPortal.Models.IsEmri>
+
+@{
+    ViewData["Title"] = "Tüm Siparişler";
+    Layout = "Admin_Layout";
+}
+
+<div class="indexbody mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="card text-light shadow-lg rounded-3">
+                <div class="card-header text-center bg-dark text-white rounded-top-3">
+                    <h2>Tüm Siparişler</h2>
+                </div>
+                <div class="card-body text-white rounded-bottom-3">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover rounded-3 w-100">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">İş Tipi</th>
+                                    <th scope="col">Atölye</th>
+                                    <th scope="col">Adet</th>
+                                    <th scope="col">Birim Fiyat</th>
+                                    <th scope="col">Toplam Maliyet</th>
+                                    <th scope="col">Durum</th>
+                                    <th scope="col">Oluşturulma Tarihi</th>
+                                    <th scope="col">Fabrika</th>
+                                    <th scope="col" style="width: 150px;">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@(item.IsTipi?.Ad ?? "Bilinmiyor")</td>
+                                        <td>@(item.Atolye?.Ad ?? "Bilinmiyor")</td>
+                                        <td>@item.Adet</td>
+                                        <td>@item.BirimFiyat.ToString("C2")</td>
+                                        <td>@((item.Adet * item.BirimFiyat).ToString("C2"))</td>
+                                        <td>@item.Durum</td>
+                                        <td>@item.OlusturulmaTarihi.ToString("dd/MM/yyyy")</td>
+                                        <td>@(item.Fabrika?.Ad ?? "Bilinmiyor")</td>
+                                        <td>
+                                            @if (item.Durum != "Teslim Edildi" && item.Durum != "İptal Edildi")
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm btn-block">Düzenle</a>
+                                                <form asp-action="Cancel" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-danger btn-sm btn-block mt-2" onclick="return confirm('Bu siparişi iptal etmek istediğinize emin misiniz?');">İptal</button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+
+<style>
+    .indexbody {
+        margin-top: 150px;
+    }
+
+    body {
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
+
+    .card {
+        background-color: #2c2c2c;
+        border: none;
+        box-shadow: 0 6px 20px rgba(139, 0, 0, 0.9);
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #8B0000;
+        background-color: #121212;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .card-body {
+        background-color: #2c2c2c;
+    }
+
+    .table {
+        background-color: #121212;
+        border-radius: 15px;
+    }
+
+    .table thead {
+        background-color: #121212;
+        border-bottom: 1px solid #8B0000;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .table thead th {
+        text-align: center; /* Sütun başlıklarını ortalar */
+    }
+
+    .table tbody tr:hover {
+        background-color: #3a3a3a;
+    }
+
+    .badge-info {
+        background-color: #024652;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #8B0000;
+        border-color: #8B0000;
+        border-radius: 5px;
+    }
+
+    .btn-primary:hover {
+        background-color: #600000;
+        border-color: #600000;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        border-radius: 5px;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+
+    .d-flex .btn {
+        margin: 0 4px;
+    }
+
+    .table-responsive {
+        overflow-x: hidden;
+    }
+
+    .table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    th, td {
+        word-wrap: break-word;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+</style>

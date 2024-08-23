@@ -1,0 +1,99 @@
+﻿@model FasonPortal.Models.AtolyeCreateEditViewModel
+
+@{
+    ViewData["Title"] = "Atölye Düzenle";
+    Layout = "Admin_Layout";
+}
+
+<div class="editbody mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card text-light shadow-lg rounded-3">
+                <div class="card-header text-center bg-dark text-white rounded-top-3">
+                    <h2>Atölye Düzenle</h2>
+                </div>
+                <div class="card-body text-white rounded-bottom-3">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="form-group mt-3">
+                            <label for="Ad">Atölye Adı</label>
+                            <input type="text" class="form-control bg-secondary text-light border-light rounded-3" asp-for="Ad" required />
+                            @Html.ValidationMessageFor(m => m.Ad, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="Aciklama">Açıklama</label>
+                            <textarea class="form-control bg-secondary text-light border-light rounded-3" asp-for="Aciklama"></textarea>
+                            @Html.ValidationMessageFor(m => m.Aciklama, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="IsTipleri">Yapılan İş Tipleri</label>
+                            <div id="isTipleriContainer" class="form-control bg-secondary text-light border-light rounded-3" style="height: auto;">
+                                @foreach (var isTipi in Model.AvailableIsTipleri)
+                                {
+                                    var isSelected = Model.SelectedIsTipleri.Contains(isTipi.Id);
+                                    var birimFiyat = Model.EskiBirimFiyatlar.ContainsKey(isTipi.Id) ? Model.EskiBirimFiyatlar[isTipi.Id] : 0;
+
+                                    <div class="form-check">
+                                        <input class="form-check-input isTipiCheckbox" type="checkbox" name="SelectedIsTipleri" value="@isTipi.Id" id="isTipi_@isTipi.Id" data-is-tipi-id="@isTipi.Id" @(isSelected ? "checked" : "") />
+                                        <label class="form-check-label" for="isTipi_@isTipi.Id">@isTipi.Ad</label>
+                                    </div>
+                                    <div class="form-group mt-2 birimFiyatGroup" id="birimFiyatGroup_@isTipi.Id" style="@(isSelected ? "" : "display:none;")">
+                                        <label for="BirimFiyat_@isTipi.Id">Birim Fiyat</label>
+                                        <input type="number" step="0.01" class="form-control bg-secondary text-light border-light rounded-3" name="BirimFiyatlar[@isTipi.Id]" id="BirimFiyat_@isTipi.Id" value="@birimFiyat.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)" @(isSelected ? "" : "disabled") />                                    
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-4 w-100">Güncelle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // İş tipi checkbox'larının değişim olayını dinle
+            $('.isTipiCheckbox').change(function () {
+                var isTipiId = $(this).data('is-tipi-id');
+                var birimFiyatGroup = '#birimFiyatGroup_' + isTipiId;
+
+                if ($(this).is(':checked')) {
+                    $(birimFiyatGroup).show();
+                    $('#BirimFiyat_' + isTipiId).prop('disabled', false); // Seçili olan iş tipleri için birim fiyat alanını etkinleştir
+                } else {
+                    $(birimFiyatGroup).hide();
+                    $('#BirimFiyat_' + isTipiId).prop('disabled', true); // Seçili olmayan iş tipleri için birim fiyat alanını devre dışı bırak
+                }
+            });
+
+            // Sayfa yüklendiğinde seçili olan iş tipleri için alanları etkinleştir
+            $('.isTipiCheckbox:checked').each(function () {
+                var isTipiId = $(this).data('is-tipi-id');
+                $('#birimFiyatGroup_' + isTipiId).show();
+                $('#BirimFiyat_' + isTipiId).prop('disabled', false);
+            });
+
+            // Form gönderildiğinde sadece seçili iş tiplerinin birim fiyatlarını gönder
+            $('form').submit(function () {
+                $('.isTipiCheckbox:not(:checked)').each(function () {
+                    var isTipiId = $(this).data('is-tipi-id');
+                    $('#BirimFiyat_' + isTipiId).prop('disabled', true);
+                });
+
+                // Virgül ile girilen ondalık değerleri noktaya çevir
+                $('input[type="number"]').each(function () {
+                    var value = $(this).val();
+                    $(this).val(value.replace(',', '.'));
+                });
+            });
+        });
+    </script>
+}

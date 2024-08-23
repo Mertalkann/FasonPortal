@@ -1,0 +1,179 @@
+﻿@model FasonPortal.Models.IsEmriViewModel
+
+@{
+    ViewData["Title"] = "Sipariş Düzenle";
+    Layout = "Admin_Layout";
+}
+
+<div class="editbody mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card text-light shadow-lg rounded-3">
+                <div class="card-header text-center bg-dark text-white rounded-top-3">
+                    <h2>Sipariş Düzenle</h2>
+                </div>
+                <div class="card-body text-white rounded-bottom-3">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" asp-for="Id" />
+
+                        <!-- Fabrika Seçimi -->
+                        <div class="form-group mt-3">
+                            <label for="FabrikaId">Fabrika</label>
+                            <select class="form-control bg-secondary text-light border-light rounded-3" asp-for="FabrikaId" asp-items="ViewBag.Fabrikalar" required>
+                                <option value="">Fabrika Seçin</option>
+                            </select>
+                            @Html.ValidationMessageFor(m => m.FabrikaId, "", new { @class = "text-danger" })
+                        </div>
+
+                        <!-- İş Tipi -->
+                        <div class="form-group mt-3">
+                            <label for="IsTipiId">İş Tipi</label>
+                            <select class="form-control bg-secondary text-light border-light rounded-3" asp-for="IsTipiId" asp-items="ViewBag.IsTipleri" required>
+                                <option value="">İş Tipi Seçin</option>
+                            </select>
+                            @Html.ValidationMessageFor(m => m.IsTipiId, "", new { @class = "text-danger" })
+                        </div>
+
+                        <!-- Atölye -->
+                        <div class="form-group mt-3">
+                            <label for="AtolyeId">Atölye</label>
+                            <select class="form-control bg-secondary text-light border-light rounded-3" asp-for="AtolyeId" asp-items="ViewBag.Atolyeler" required>
+                                <option value="">Atölye Seçin</option>
+                            </select>
+                            @Html.ValidationMessageFor(m => m.AtolyeId, "", new { @class = "text-danger" })
+                        </div>
+
+                        <!-- Birim Fiyat -->
+                        <div class="form-group mt-3">
+                            <label for="BirimFiyat">Birim Fiyat</label>
+                            <input type="number" class="form-control bg-secondary text-light border-light rounded-3" asp-for="BirimFiyat" readonly />
+                        </div>
+
+                        <!-- Adet -->
+                        <div class="form-group mt-3">
+                            <label for="Adet">Adet</label>
+                            <input type="number" class="form-control bg-secondary text-light border-light rounded-3" asp-for="Adet" required />
+                            @Html.ValidationMessageFor(m => m.Adet, "", new { @class = "text-danger" })
+                        </div>
+
+                        <!-- Toplam Maliyet -->
+                        <div class="form-group mt-3">
+                            <label for="ToplamMaliyet">Toplam Maliyet</label>
+                            <input type="text" class="form-control bg-secondary text-light border-light rounded-3" id="ToplamMaliyet" readonly />
+                        </div>
+
+                        <!-- Durum -->
+                        <div class="form-group mt-3">
+                            <label for="Durum">Durum</label>
+                            <select class="form-control bg-secondary text-light border-light rounded-3" asp-for="Durum">
+                                <option value="Beklemede">Beklemede</option>
+                                <option value="Onaylandı">Onaylandı</option>
+                                <option value="Hazırlanıyor">Hazırlanıyor</option>
+                                <option value="Tamamlandı">Tamamlandı</option>
+                                <option value="İptal Edildi">İptal Edildi</option>
+                            </select>
+                        </div>
+
+                        <!-- Açıklama -->
+                        <div class="form-group mt-3">
+                            <label for="Aciklama">Açıklama</label>
+                            <textarea class="form-control bg-secondary text-light border-light rounded-3" asp-for="Aciklama"></textarea>
+                        </div>
+
+                        <!-- Kaydet Butonu -->
+                        <button type="submit" class="btn btn-primary mt-4 w-100">Güncelle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .editbody {
+        margin-top: 150px;
+    }
+
+    body {
+        background-color: #2c2c2c;
+        color: #ffffff;
+    }
+
+    .card {
+        background-color: #2c2c2c;
+        border: none;
+        box-shadow: 0 6px 20px rgba(139, 0, 0, 0.9);
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #8B0000;
+        background-color: #121212;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .card-body {
+        background-color: #2c2c2c;
+    }
+
+    .form-control {
+        background-color: #2c2c2c;
+        border: 1px solid #2c2c2c;
+        color: #ffffff;
+        border-radius: 5px;
+    }
+
+    .form-control:focus {
+        background-color: #343a40;
+        color: #ffffff;
+        box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.9);
+    }
+
+    .btn-primary {
+        background-color: #8B0000;
+        border-color: #8B0000;
+        border-radius: 5px;
+    }
+
+    .btn-primary:hover {
+        background-color: #600000;
+        border-color: #600000;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // İş Tipi seçildiğinde ilgili atölyeleri yükle
+            $('#IsTipiId').change(function () {
+                var isTipiId = $(this).val();
+                $.get('/Admin/JobManagement/GetAtolyelerByIsTipi', { isTipiId: isTipiId }, function (data) {
+                    $('#AtolyeId').html('');
+                    $('#AtolyeId').append('<option value="">Atölye Seçin</option>');
+                    $.each(data, function (index, item) {
+                        $('#AtolyeId').append('<option value="' + item.id + '">' + item.ad + '</option>');
+                    });
+                });
+            });
+
+            // Atölye seçildiğinde birim fiyatı yükle
+            $('#AtolyeId').change(function () {
+                var atolyeId = $(this).val();
+                var isTipiId = $('#IsTipiId').val();
+                $.get('/Admin/JobManagement/GetBirimFiyat', { atolyeId: atolyeId, isTipiId: isTipiId }, function (data) {
+                    $('#BirimFiyat').val(data.birimFiyat);
+                });
+            });
+
+            // Adet girildiğinde toplam maliyeti hesapla
+            $('#Adet').on('input', function () {
+                var adet = $(this).val();
+                var birimFiyat = $('#BirimFiyat').val();
+                var toplamMaliyet = adet * birimFiyat;
+                $('#ToplamMaliyet').val(toplamMaliyet.toFixed(2) + ' TL');
+            });
+        });
+    </script>
+}

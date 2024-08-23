@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FasonPortal Admin</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" />
+    <style>
+        .back {
+            background: url('/images/background.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .logo {
+        max-height: 200px !important;
+            height: auto !important;
+            width: auto !important;
+        }
+
+
+
+        .navbar-brand,
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem; /* Yazı boyutunu büyüt */
+        }
+
+        .navbar-brand .logo {
+            max-height: 100px; /* Logoyu büyüt */
+        }
+
+        .welcome-text {
+            margin-left: 15px;
+            white-space: nowrap;
+            color: #ffffff;
+            font-size: 1.25rem; /* Yazı boyutunu büyüt */
+        }
+
+        .navbar-nav {
+            margin-left: auto;
+        }
+
+        .navbar {
+            background-color: #2c2c2c;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+            box-shadow: 0 6px 20px #3b0000;
+            height: 100px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar {
+            background-color: #2c2c2c;
+            position: fixed;
+            top: 100px;
+            left: 0;
+            padding-top: 20px;
+            width: 220px;
+            box-shadow: 6px 0 20px #3b0000;
+            z-index: 1020;
+            overflow-y: auto;
+            height: calc(100% - 100px); /* Navbar'ın yüksekliğine göre ayarlandı */
+        }
+
+        .sidebar .nav-link {
+            color: #ffffff;
+            font-size: 18px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            border-bottom: 1px solid #444;
+        }
+
+
+        .sidebar .nav-link:hover {
+            background-color: #3b0000;
+            color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 20px #3b0000;
+            transform: scale(1.05);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .content {
+            margin-left: 240px;
+            padding: 20px;
+            padding-top: 120px;
+            min-height: calc(100vh - 160px); /* Footer'ın alt kısma yerleşmesi için içerik yüksekliği ayarlandı */
+        }
+
+        body,
+        .navbar,
+        .footer,
+        .card,
+        .nav-link,
+        .card-text,
+        .display-4,
+        h5,
+        span {
+            font-family: 'Roboto', sans-serif;
+        }
+        .footer {
+            background-color: #2c2c2c;
+            box-shadow: 0 -6px 20px #3b0000;
+            padding: 10px 0;
+            text-align: center;
+            color: #ffffff;
+            margin-top: auto;
+            position: relative; /* Footer'ı içerikten sonra yerleştirir */
+            z-index: 1030; /* Sidebar'ın altında kalmaması için z-index ayarlandı */
+        }
+
+    </style>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+
+<body class="back d-flex flex-column min-vh-100">
+    <header>
+        <!-- Üst Navbar -->
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top nav">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <img src="~/images/asonlogo.png" alt="FasonPortal Logo" class="logo">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <span class="nav-link h5 text-white welcome-text">Hoşgeldiniz, @User.Identity.Name</span>
+                    }
+                </a>
+
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            @if (User.IsInRole("FabrikaYetkilisi"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link h5" asp-area="" asp-controller="Fabrika"
+                                        asp-action="Index">Siparişlerim</a>
+                                </li>
+                            }
+                            <li class="nav-item">
+                                <form id="logoutForm" asp-area="" asp-controller="Account" asp-action="Logout"
+                                    method="post" class="form-inline">
+                                    <button type="submit" class="btn btn-link h5 nav-link"
+                                        style="text-decoration:none;">Logout</button>
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link h5" asp-area="" asp-controller="Account"
+                                    asp-action="Login">Login</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Sol Sidebar -->
+    <div class="sidebar">
+        <ul class="nav flex-column">
+            @if (User.Identity.IsAuthenticated)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="UserManagement" asp-action="Index">
+                        <i class="fas fa-users"></i> Kullanıcı İşlemleri
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="JobManagement" asp-action="Index">
+                        <i class="fas fa-tasks"></i> Sipariş İşlemleri
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="FabrikaManagement" asp-action="Index">
+                        <i class="fas fa-industry"></i> Fabrika İşlemleri
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="AtolyeManagement" asp-action="Index">
+                        <i class="fas fa-warehouse"></i> Atölye İşlemleri
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="IsTipiManagement" asp-action="Index">
+                        <i class="fas fa-briefcase"></i> İş Tipi İşlemleri
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <main role="main" class="content">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="footer mt-auto py-3 text-white-50 nav">
+        <div class="container text-center">
+            <span>© 2023 FasonPortal. All rights reserved.</span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+
+</html>
