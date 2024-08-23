@@ -1,5 +1,4 @@
-﻿using DinkToPdf.Contracts;
-using DinkToPdf;
+﻿
 using FasonPortal.Data;
 using FasonPortal.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -13,12 +12,10 @@ namespace FasonPortal.Areas.Admin.Controllers
     public class FabrikaManagementController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IConverter _converter;
 
-        public FabrikaManagementController(ApplicationDbContext context, IConverter converter)
+        public FabrikaManagementController(ApplicationDbContext context)
         {
             _context = context;
-            _converter = converter;
         }
 
         // Index Metodu
@@ -161,99 +158,7 @@ namespace FasonPortal.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Fabrika sipariş raporu alma
-        public async Task<IActionResult> RaporAl(int fabrikaId)
-        {
-            var fabrika = await _context.Fabrikalar
-                .Include(f => f.IsEmirleri)
-                .ThenInclude(e => e.IsTipi)
-                .Include(f => f.IsEmirleri)
-                .ThenInclude(e => e.Atolye)
-                .FirstOrDefaultAsync(f => f.Id == fabrikaId);
-
-            if (fabrika == null)
-            {
-                return NotFound();
-            }
-
-            var aktifIsEmirleri = fabrika.IsEmirleri
-                .Where(e => e.Durum != "İptal Edildi")
-                .OrderByDescending(e => e.OlusturulmaTarihi)
-                .ToList();
-
-            var tumIsEmirleri = fabrika.IsEmirleri
-                .OrderByDescending(e => e.OlusturulmaTarihi)
-                .ToList();
-
-            var model = new FabrikaRaporViewModel
-            {
-                FabrikaAd = fabrika.Ad,
-                IsEmirleri = tumIsEmirleri.Select(e => new IsEmriViewModel
-                {
-                    Id = e.Id,
-                    IsTipiAd = e.IsTipi?.Ad,
-                    AtolyeAd = e.Atolye?.Ad,
-                    Adet = e.Adet,
-                    BirimFiyat = e.BirimFiyat,
-                    Aciklama = e.Aciklama,
-                    Durum = e.Durum,
-                    OlusturulmaTarihi = e.OlusturulmaTarihi
-                }).ToList()
-            };
-
-            ViewBag.AtolyeBazliGruplar = aktifIsEmirleri
-                .GroupBy(e => e.Atolye.Ad)
-                .Select(g => new
-                {
-                    AtolyeAd = g.Key,
-                    IsTipiGruplar = g.GroupBy(ie => ie.IsTipi.Ad)
-                        .Select(ig => new
-                        {
-                            IsTipiAd = ig.Key,
-                            ToplamAdet = ig.Sum(ie => ie.Adet),
-                            ToplamTutar = ig.Sum(ie => ie.BirimFiyat * ie.Adet)
-                        }).ToList(),
-                    ToplamAdet = g.Sum(ie => ie.Adet),
-                    ToplamTutar = g.Sum(ie => ie.BirimFiyat * ie.Adet)
-                }).ToList();
-
-            ViewBag.IsTipiBazliGruplar = aktifIsEmirleri
-                .GroupBy(e => e.IsTipi.Ad)
-                .Select(g => new
-                {
-                    IsTipiAd = g.Key,
-                    AtolyeGruplar = g.GroupBy(ie => ie.Atolye.Ad)
-                        .Select(ag => new
-                        {
-                            AtolyeAd = ag.Key,
-                            ToplamAdet = ag.Sum(ie => ie.Adet),
-                            ToplamTutar = ag.Sum(ie => ie.BirimFiyat * ie.Adet)
-                        }).ToList(),
-                    ToplamAdet = g.Sum(ie => ie.Adet),
-                    ToplamTutar = g.Sum(ie => ie.BirimFiyat * ie.Adet)
-                }).ToList();
-
-            var htmlContent = await this.RenderViewAsync("RaporTemplate", model, true);
-
-            var pdf = new HtmlToPdfDocument()
-            {
-                GlobalSettings = {
-            ColorMode = ColorMode.Color,
-            Orientation = Orientation.Portrait,
-            PaperSize = PaperKind.A4,
-        },
-                Objects = {
-            new ObjectSettings() {
-                PagesCount = true,
-                HtmlContent = htmlContent,
-                WebSettings = { DefaultEncoding = "utf-8" }
-            }
-        }
-            };
-
-            var pdfBytes = _converter.Convert(pdf);
-            return File(pdfBytes, "application/pdf", "FabrikaSiparisRaporu.pdf");
-        }
+        
 
 
 

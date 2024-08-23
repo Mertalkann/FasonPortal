@@ -1,5 +1,4 @@
-﻿using DinkToPdf;
-using DinkToPdf.Contracts;
+﻿
 using FasonPortal.Data;
 using FasonPortal.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -17,12 +16,12 @@ namespace FasonPortal.Controllers
     public class AtolyeManagementController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IConverter _converter;
 
-        public AtolyeManagementController(ApplicationDbContext context, IConverter converter)
+
+        public AtolyeManagementController(ApplicationDbContext context)
         {
             _context = context;
-            _converter = converter;
+
         }
 
         // Index (Atölye listeleme)
@@ -123,7 +122,7 @@ namespace FasonPortal.Controllers
                     {
                         IsTipiId = isTipiId,
                         BirimFiyat = decimal.Parse(viewModel.BirimFiyatlar[isTipiId].ToString(), CultureInfo.InvariantCulture)
-            }).ToList()
+                    }).ToList()
                 };
 
                 _context.Atolyeler.Add(atolye);
@@ -237,104 +236,5 @@ namespace FasonPortal.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-
-        public async Task<IActionResult> RaporAl(int atolyeId)
-        {
-            var atolye = await _context.Atolyeler
-                .Include(a => a.IsEmirleri)
-                .ThenInclude(e => e.IsTipi)
-                .Include(a => a.IsEmirleri)
-                .ThenInclude(e => e.Fabrika)
-                .FirstOrDefaultAsync(a => a.Id == atolyeId);
-
-            if (atolye == null)
-            {
-                return NotFound();
-            }
-
-            // "İptal" durumundaki siparişleri hariç tutarak gruplama işlemleri için kullanılacak listeyi oluşturuyoruz
-            var aktifIsEmirleri = atolye.IsEmirleri
-                .Where(e => e.Durum != "İptal Edildi")
-                .OrderByDescending(e => e.OlusturulmaTarihi)
-                .ToList();
-
-            // Tüm siparişler (iptal olanlar dahil) `Ayrıntılı Sipariş Bilgileri` bölümünde kullanılacak
-            var tumIsEmirleri = atolye.IsEmirleri
-                .OrderByDescending(e => e.OlusturulmaTarihi)
-                .ToList();
-
-            var model = new AtolyeRaporViewModel
-            {
-                AtolyeAd = atolye.Ad,
-                IsEmirleri = tumIsEmirleri.Select(e => new IsEmriViewModel
-                {
-                    Id = e.Id,
-                    IsTipiAd = e.IsTipi?.Ad,
-                    FabrikaAd = e.Fabrika?.Ad,
-                    Adet = e.Adet,
-                    BirimFiyat = e.BirimFiyat,
-                    Aciklama = e.Aciklama,
-                    Durum = e.Durum,
-                    OlusturulmaTarihi = e.OlusturulmaTarihi
-                }).ToList()
-            };
-
-            // Fabrika bazlı gruplama (İptal olanlar hariç)
-            ViewBag.FabrikaBazliGruplar = aktifIsEmirleri
-                .GroupBy(e => e.Fabrika.Ad)
-                .Select(g => new
-                {
-                    FabrikaAd = g.Key,
-                    IsTipiGruplar = g.GroupBy(ie => ie.IsTipi.Ad)
-                        .Select(ig => new
-                        {
-                            IsTipiAd = ig.Key,
-                            ToplamAdet = ig.Sum(ie => ie.Adet),
-                            ToplamTutar = ig.Sum(ie => ie.BirimFiyat * ie.Adet)
-                        }).ToList(),
-                    ToplamAdet = g.Sum(ie => ie.Adet),
-                    ToplamTutar = g.Sum(ie => ie.BirimFiyat * ie.Adet)
-                }).ToList();
-
-            // İş tipi bazlı gruplama (İptal olanlar hariç)
-            ViewBag.IsTipiBazliGruplar = aktifIsEmirleri
-                .GroupBy(e => e.IsTipi.Ad)
-                .Select(g => new
-                {
-                    IsTipiAd = g.Key,
-                    FabrikaGruplar = g.GroupBy(ie => ie.Fabrika.Ad)
-                        .Select(fg => new
-                        {
-                            FabrikaAd = fg.Key,
-                            ToplamAdet = fg.Sum(ie => ie.Adet),
-                            ToplamTutar = fg.Sum(ie => ie.BirimFiyat * ie.Adet)
-                        }).ToList(),
-                    ToplamAdet = g.Sum(ie => ie.Adet),
-                    ToplamTutar = g.Sum(ie => ie.BirimFiyat * ie.Adet)
-                }).ToList();
-
-            var htmlContent = await this.RenderViewAsync("RaporTemplate", model, true);
-
-            var pdf = new HtmlToPdfDocument()
-            {
-                GlobalSettings = {
-        ColorMode = ColorMode.Color,
-        Orientation = Orientation.Portrait,
-        PaperSize = PaperKind.A4,
-    },
-                Objects = {
-        new ObjectSettings() {
-            PagesCount = true,
-            HtmlContent = htmlContent,
-            WebSettings = { DefaultEncoding = "utf-8" }
-        }
-    }
-            };
-
-            var pdfBytes = _converter.Convert(pdf);
-            return File(pdfBytes, "application/pdf", "AtolyeSiparisRaporu.pdf");
-        }
-
-
     }
 }

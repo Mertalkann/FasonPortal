@@ -7,8 +7,7 @@ using FasonPortal.Helpers;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using DinkToPdf;
-using DinkToPdf.Contracts;
+
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -21,15 +20,15 @@ public class FabrikaController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConverter _converter;
+
     private readonly IWebHostEnvironment _env;
     private readonly IEmailSender _emailSender;  // EmailSender servisi
 
-    public FabrikaController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IConverter converter, IWebHostEnvironment env, IEmailSender emailSender)
+    public FabrikaController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment env, IEmailSender emailSender)
     {
         _context = context;
         _userManager = userManager;
-        _converter = converter;
+
         _env = env;
         _emailSender = emailSender;  // EmailSender servisini constructor'a ekleme
     }
@@ -233,95 +232,6 @@ public class FabrikaController : Controller
 
 
 
-    // RaporAl metodu
-    public async Task<IActionResult> RaporAl()
-    {
-        var user = await _userManager.GetUserAsync(User);
-
-        // IsEmri ile ilişkili tüm detayları yüklüyoruz
-        var isEmirleri = _context.IsEmirleri
-            .Include(e => e.IsTipi)
-            .Include(e => e.Atolye)
-            .Include(e => e.Fabrika)
-            .Where(e => e.FabrikaId == user.FabrikaId)
-            .OrderByDescending(e => e.OlusturulmaTarihi)
-            .ToList();
-
-        // IsEmri modelini IsEmriViewModel'e dönüştürme
-        var isEmriViewModels = isEmirleri.Select(e => new IsEmriViewModel
-        {
-            Id = e.Id,
-            IsTipiId = e.IsTipiId,
-            IsTipiAd = e.IsTipi?.Ad,
-            AtolyeId = e.AtolyeId,
-            AtolyeAd = e.Atolye?.Ad,
-            Adet = e.Adet,
-            BirimFiyat = e.BirimFiyat,
-            Aciklama = e.Aciklama,
-            Durum = e.Durum,
-            OlusturulmaTarihi = e.OlusturulmaTarihi,
-            FabrikaAd = e.Fabrika?.Ad
-        }).ToList();
-
-        var htmlContent = await this.RenderViewAsync("RaporTemplate", isEmriViewModels, true);
-
-        var pdf = new HtmlToPdfDocument()
-        {
-            GlobalSettings = {
-            ColorMode = ColorMode.Color,
-            Orientation = Orientation.Portrait,
-            PaperSize = PaperKind.A4,
-        },
-            Objects = {
-            new ObjectSettings() {
-                PagesCount = true,
-                HtmlContent = htmlContent,
-                WebSettings = { DefaultEncoding = "utf-8" }
-            }
-        }
-        };
-
-        var pdfBytes = _converter.Convert(pdf);
-        return File(pdfBytes, "application/pdf", "SiparisRaporu.pdf");
-    }
-
-    // Sipariş düzenleme sayfası
-    public IActionResult Edit(int id)
-    {
-        var isEmri = _context.IsEmirleri
-            .Include(e => e.IsTipi)
-            .Include(e => e.Atolye)
-            .Include(e => e.Fabrika)
-            .FirstOrDefault(e => e.Id == id);
-
-        if (isEmri == null)
-        {
-            return NotFound();
-        }
-
-        var model = new IsEmriViewModel
-        {
-            Id = isEmri.Id,
-            IsTipiId = isEmri.IsTipiId,
-            AtolyeId = isEmri.AtolyeId,
-            FabrikaId = isEmri.FabrikaId,
-            Adet = isEmri.Adet,
-            BirimFiyat = isEmri.BirimFiyat,
-            Aciklama = isEmri.Aciklama,
-            Durum = isEmri.Durum,
-            IsTipiAd = isEmri.IsTipi.Ad,  // İş tipi adını doldurma
-            AtolyeAd = isEmri.Atolye.Ad,   // Atölye adını doldurma
-            FabrikaAd = isEmri.Fabrika.Ad  // Fabrika adını doldurma
-        };
-
-        ViewBag.IsTipleri = new SelectList(_context.IsTipleri, "Id", "Ad", model.IsTipiId);
-        ViewBag.Atolyeler = new SelectList(_context.AtolyeIsler
-            .Where(ai => ai.IsTipiId == model.IsTipiId)
-            .Select(ai => ai.Atolye)
-            .ToList(), "Id", "Ad", model.AtolyeId);
-
-        return View(model);
-    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]

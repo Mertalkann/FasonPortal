@@ -2,8 +2,7 @@ using FasonPortal.Data;
 using FasonPortal.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using DinkToPdf;
-using DinkToPdf.Contracts;
+
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using System.Reflection;
@@ -60,7 +59,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddControllersWithViews();
 
 // DinkToPdf hizmetini ekleme
-builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
 // RequestLocalization'ý kullanarak kültürel ayarlarý uygula
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -109,8 +107,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 // DLL yükleme iþlemi
-var context = new CustomAssemblyLoadContext();
-context.LoadUnmanagedDll(Path.Combine(app.Environment.WebRootPath, "DinkToPdf", "libwkhtmltox.dll"));
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -4,8 +4,7 @@ using FasonPortal.Data;
 using System.Linq;
 using FasonPortal.Models;
 using Microsoft.AspNetCore.Identity;
-using DinkToPdf.Contracts;
-using DinkToPdf;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Logging;
@@ -14,15 +13,13 @@ public class AtolyeController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConverter _converter;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<AtolyeController> _logger;
 
-    public AtolyeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IConverter converter, IEmailSender emailSender, ILogger<AtolyeController> logger)
+    public AtolyeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IEmailSender emailSender, ILogger<AtolyeController> logger)
     {
         _context = context;
         _userManager = userManager;
-        _converter = converter;
         _emailSender = emailSender;
         _logger = logger;
     }
@@ -163,58 +160,5 @@ public class AtolyeController : Controller
         return View();
     }
 
-    public async Task<IActionResult> RaporAl()
-    {
-        var user = await _userManager.GetUserAsync(User);
-
-        var fabrikaSiparisleri = _context.IsEmirleri
-            .Where(e => e.Atolye.Users.Any(u => u.Id == user.Id))
-            .Include(e => e.IsTipi)
-            .Include(e => e.Fabrika)
-            .OrderByDescending(e => e.OlusturulmaTarihi)
-            .ToList();
-
-        var fabrikaGruplari = fabrikaSiparisleri
-            .GroupBy(e => e.Fabrika.Ad)
-            .Select(g => new FabrikaBazliSiparisViewModel
-            {
-                FabrikaAd = g.Key,
-                Siparisler = g.Select(s => new IsEmriViewModel
-                {
-                    Id = s.Id,
-                    IsTipiAd = s.IsTipi.Ad,
-                    Adet = s.Adet,
-                    BirimFiyat = s.BirimFiyat,
-                    Aciklama = s.Aciklama,
-                    Durum = s.Durum,
-                    OlusturulmaTarihi = s.OlusturulmaTarihi
-                }).ToList()
-            }).ToList();
-
-        var model = new AtolyeRaporViewModel
-        {
-            FabrikaGruplari = fabrikaGruplari
-        };
-
-        var htmlContent = await this.RenderViewAsync("RaporTemplate", model, true);
-
-        var pdf = new HtmlToPdfDocument()
-        {
-            GlobalSettings = {
-                ColorMode = ColorMode.Color,
-                Orientation = Orientation.Portrait,
-                PaperSize = PaperKind.A4,
-            },
-            Objects = {
-                new ObjectSettings() {
-                    PagesCount = true,
-                    HtmlContent = htmlContent,
-                    WebSettings = { DefaultEncoding = "utf-8" }
-                }
-            }
-        };
-
-        var pdfBytes = _converter.Convert(pdf);
-        return File(pdfBytes, "application/pdf", "TumFabrikalarSiparisRaporu.pdf");
-    }
+  
 }
